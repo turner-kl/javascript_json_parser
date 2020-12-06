@@ -1,0 +1,16 @@
+{
+  "name": "json-parse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha src/* --recursive",
+    "watch": "npx nodemon --watch 'src' --ext 'js' --exec npm run test"
+  },
+  "author": "turner-kl",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1"
+  }
+}
