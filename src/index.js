@@ -28,7 +28,7 @@ exports.json_parse = (() => {
    *
    * @param {string} message
    */
-  const error = function (message) {
+  const error = (message) => {
     throw {
       name: "SyntaxError",
       message,
@@ -43,13 +43,16 @@ exports.json_parse = (() => {
    *
    * @param {string} c
    */
-  const next = function (c) {
+  const next = (c) => {
+    console.debug('next関数', { c })
     if (c && c !== ch) {
       error("Expected '" + c + "' instead of '" + ch + "'");
     }
     // 次の文字を取得します。もしそれ以上がなかったら、空文字を返します
+    console.debug('next関数', { at })
     ch = text.charAt(at);
     at += 1;
+    console.debug('next関数return', { ch })
     return ch;
   };
 
@@ -57,8 +60,8 @@ exports.json_parse = (() => {
    * 数値を解析する関数
    */
   const number = () => {
-    var number,
-      string = "";
+    let number;
+    let string = "";
 
     // もしマイナスが来たら、マイナスをstringに取りおいて次へ
     if (ch === "-") {
@@ -107,14 +110,16 @@ exports.json_parse = (() => {
       return number;
     }
   };
+
   /*
    * 文字列を解析する関数
    */
   const string = () => {
-    var hex,
-      i,
-      string = "",
-      uffff;
+    console.debug('string', { ch })
+    let hex;
+    let i;
+    let string = "";
+    let uffff;
 
     // 文字列を解析する場合には、"と\という文字を探す必要があります
     // Unicode文字は、\とuを処理した後、16進数として数値で読み、最大で4回、読み込みながらhexに足していきます
@@ -146,6 +151,7 @@ exports.json_parse = (() => {
             break;
           }
         } else {
+          console.debug('else',{ch})
           string += ch;
         }
       }
@@ -158,9 +164,11 @@ exports.json_parse = (() => {
    */
   const white = () => {
     while (ch && ch <= " ") {
+      console.debug('white', { ch })
       next();
     }
   };
+
   const word = () => {
     // true, false, nullを処理する関数
 
@@ -187,6 +195,7 @@ exports.json_parse = (() => {
     }
     error("Unexpected '" + ch + "'");
   };
+
   const array = () => {
     // 配列を解析する関数
 
@@ -213,12 +222,14 @@ exports.json_parse = (() => {
     }
     error("Bad array");
   };
+
   /*
    * オブジェクトを解析する関数
    */
   const object = () => {
-    var key,
-      object = {};
+    console.debug('object')
+    let key;
+    let object = {};
 
     if (ch === "{") {
       next("{");
@@ -228,7 +239,9 @@ exports.json_parse = (() => {
         return object; // 空のオブジェクト
       }
       while (ch) {
+        console.debug('while', { ch })
         key = string(); // keyはstring関数の値を入れる
+        console.debug('while', { key })
         white();
         next(":");
         object[key] = value(); // objectはvalue関数の結果を入れる
@@ -252,9 +265,12 @@ exports.json_parse = (() => {
    * 無論、object関数とarray関数からはこのvalue関数が呼ばれており、再帰しています。
    */
   const value = () => {
+    console.debug('value')
     white();
+    console.debug('value', { ch })
     switch (ch) {
       case "{":
+        console.debug('dd')
         return object();
       case "[":
         return array();
@@ -278,12 +294,14 @@ exports.json_parse = (() => {
   // 無名関数内変数は、外部から変更されない安全な変数になります。
 
   return (source, reviver) => {
+    console.debug('sourceとreviverを受け取り、処理を開始する。  ', { source, reviver });
     var result;
 
     text = source; // sourceをtextに移動
     at = 0;
     ch = " ";
     result = value(); // value関数を使いtextが再帰的に評価されていく
+    console.log('valueが帰ってきた')
     white();
     if (ch) {
       // ここで文字列の最後に到達しているはず
@@ -298,23 +316,23 @@ exports.json_parse = (() => {
 
     return typeof reviver === "function"
       ? (function walk(holder, key) {
-          var k,
-            v,
-            value = holder[key];
-          if (value && typeof value === "object") {
-            for (k in value) {
-              if (Object.hasOwnProperty.call(value, k)) {
-                v = walk(value, k);
-                if (v !== undefined) {
-                  value[k] = v;
-                } else {
-                  delete value[k];
-                }
+        var k,
+          v,
+          value = holder[key];
+        if (value && typeof value === "object") {
+          for (k in value) {
+            if (Object.hasOwnProperty.call(value, k)) {
+              v = walk(value, k);
+              if (v !== undefined) {
+                value[k] = v;
+              } else {
+                delete value[k];
               }
             }
           }
-          return reviver.call(holder, key, value);
-        })({ "": result }, "")
+        }
+        return reviver.call(holder, key, value);
+      })({ "": result }, "")
       : result;
 
     // ------------------ 難しいので処理を解説 ----------------------
