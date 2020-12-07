@@ -1,6 +1,6 @@
 require("mocha");
 const { assert } = require("chai");
-const { jsonParser } = require("./turner");
+const { jsonParser } = require("./index");
 
 describe("json_parse", () => {
   it("単純なKeyValue", () => {
