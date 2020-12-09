@@ -1,4 +1,5 @@
 require("mocha");
+require('mocha-suppress-logs')();
 const { assert } = require("chai");
 const { jsonParser } = require("./index");
 
